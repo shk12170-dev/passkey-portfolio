@@ -1,0 +1,16 @@
+{
+  "name": "dk-security-passkey-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "1번 과제 공개 소개 페이지 + 패스키(WebAuthn)로만 열리는 비공개 영역",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@simplewebauthn/server": "^11.0.0",
+    "@upstash/redis": "^1.34.0"
+  },
+  "devDependencies": {
+    "vercel": "^37.0.0"
+  }
+}
