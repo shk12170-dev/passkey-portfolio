@@ -46,6 +46,8 @@ module.exports = async (req, res) => {
         counter: matching.counter,
         transports: matching.transports,
       },
+      // login-options.js도 userVerification: 'preferred'라서 검증 쪽도 맞춘다.
+      requireUserVerification: false,
     });
   } catch (err) {
     return res.status(401).json({ error: 'verification_failed', message: err.message });

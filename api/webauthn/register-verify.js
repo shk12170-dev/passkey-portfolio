@@ -24,6 +24,9 @@ module.exports = async (req, res) => {
       expectedChallenge,
       expectedOrigin: origin,
       expectedRPID: rpID,
+      // register-options.js에서 userVerification: 'preferred'로 요청했으니
+      // 검증 쪽도 UV를 필수로 강제하지 않도록 맞춘다 (둘이 어긋나면 여기서 거절됨).
+      requireUserVerification: false,
     });
   } catch (err) {
     return res.status(400).json({ error: 'verification_failed', message: err.message });
