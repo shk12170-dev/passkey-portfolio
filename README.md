@@ -4,8 +4,8 @@
 
 ## 제출물
 
-- 결과물 URL: `TODO — Vercel 배포 후 채우기 (예: https://xxxx.vercel.app)`
-- 소스 URL: `TODO — GitHub 저장소 주소`
+- 결과물 URL: https://passkey-portfolio.vercel.app
+- 소스 URL: https://github.com/shk12170-dev/passkey-portfolio
 
 ## 1. 인증 구현 설명서 (6항목)
 
@@ -27,14 +27,19 @@ WebAuthn 저수준 스펙(CBOR/COSE 파싱, attestation 검증, 서명 검증)�
 - 비공개 자료 조회: `GET /api/private-data`([코드](api/private-data.js)) → `lib/auth.js:requireSession`이 세션 검증 → 401 또는 본인 자료만 반환
 
 **⑤ 확인 4가지 ↔ 성공/실패 요청·응답**
-| 확인 항목 | 성공 응답 | 실패 응답 |
-|---|---|---|
-| 로그인 없이 비공개 요청 | — | `GET /api/private-data` → `401 unauthenticated` |
-| 남의 패스키로 로그인 | `POST .../login-verify` → `200 {verified:true}` (본인 것) | 다른 계정 자격증명 id로는 애초에 `unknown_credential`(401) |
-| 이미 쓴 패스키로 열기 | 최초 요청 → `200` | 지운 패스키로 재로그인 시도 → `401 unknown_credential` |
-| 패스키 삭제 뒤 재로그인 | — | `TODO: 실제 캡처 붙이기` |
 
-*(TODO — 배포 후 브라우저 개발자도구 Network 탭에서 실제 요청/응답 캡처를 여기에 붙여넣을 것. 세션 쿠키 값은 마스킹.)*
+배포된 `https://passkey-portfolio.vercel.app`에 curl로 직접 요청해서 서버 쪽 거절 로직은 이미 검증했다 (아래는 실제 캡처, 지어낸 값 아님). 다만 **등록/로그인 성공 케이스는 실제 인증기(지문·PIN 등)의 서명이 있어야만 만들 수 있어서** 브라우저 자동화로는 재현이 안 되고, 내 노트북에서 직접 한 번 더 눌러서 캡처해야 한다 (아래 TODO 표시).
+
+| 확인 항목 | 실패 응답 (검증됨) | 성공 응답 |
+|---|---|---|
+| 로그인 없이 비공개 요청 | `GET /api/private-data` (쿠키 없음) → `401 {"error":"unauthenticated"}` | 로그인 후 `GET /api/private-data` → `200 {username, notes:[...]}` `TODO: 실제 기기로 로그인 후 캡처` |
+| 등록 안 된 계정으로 로그인 시도 | `POST /api/webauthn/login-options {"username":"nobody-yet"}` → `404 {"error":"no_passkeys"}` | 등록된 계정 → `200 {challenge, allowCredentials:[...]}` `TODO` |
+| 깨진/위조된 자격증명으로 등록 마무리 | `POST /api/webauthn/register-verify` (조작된 credential) → `400 {"error":"verification_failed"}` | 실제 인증기 응답 → `200 {"verified":true}` `TODO` |
+| 세션 없이 패스키 목록/삭제 | `GET /api/passkeys`, `DELETE /api/passkeys/x` (쿠키 없음) → 둘 다 `401` | 로그인 후 → `200` `TODO` |
+| 지운 패스키로 재로그인 | *(실기기 필요)* `TODO: 패스키 삭제 후 같은 자격증명으로 login-verify → 401 unknown_credential` | — |
+| 이미 쓴 challenge 재사용 | *(실기기 필요)* `TODO: login-verify 성공 직후 같은 challenge로 재요청 → 400 challenge_expired_or_missing` | 최초 1회만 `200` |
+
+**남은 캡처 방법 (내 노트북에서 1회 진행)**: 결과물 URL 접속 → 개발자도구(F12) Network 탭 열기 → 아이디 입력 후 "패스키 등록" → Windows Hello/지문 승인 → `register-verify` 요청/응답 캡처 → 로그아웃 → "패스키로 로그인" → `login-verify` 요청/응답 캡처 → 패스키 삭제 → 같은 아이디로 재로그인 시도해서 `401` 캡처. 세션 쿠키(`dk_sid`) 값은 캡처에서 마스킹.
 
 **⑥ 아직 못 막은 것 (최소 하나)**
 현재 계정 생성에 아무 제약이 없어서(아이디만 있으면 등록 가능) 누구나 임의의 아이디로 새 계정을 만들 수 있다 — 즉 "내 계정"과 "다른 사람이 만든 계정"을 서버가 구분하지 못한다. 실제 서비스라면 계정 생성 자체를 막거나(예: 초대 코드) 소유자 1명만 등록 가능하도록 화이트리스트를 둬야 하는데, 이번 과제에서는 카드5의 "계정 2개로 상호 테스트"를 쉽게 하기 위해 일부러 열어뒀다.
